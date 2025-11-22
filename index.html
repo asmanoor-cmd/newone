@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ameli — A Romantic Surprise</title>
+  <style>
+    :root {
+      --bg1: #ffe4f0;
+      --bg2: #ffd1e5;
+      --accent: #ff3a7a;
+      --accent-2: #ff8cbf;
+      --muted: #7a7a7a;
+      --card: #ffffff;
+    }
+
+    * {box-sizing:border-box;}
+    html, body {height:100%; margin:0; font-family: Inter, Poppins, system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    body {background: linear-gradient(180deg, var(--bg1), var(--bg2)); color:#222;}
+
+    /* Centering / container */
+    .center-card {max-width:920px; margin:20px auto; padding:22px; border-radius:16px; background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,250,252,0.95)); box-shadow:0 10px 30px rgba(0,0,0,0.06); text-align:center;}
+    .brand {font-size:20px; color:var(--accent); margin:0 0 6px 0; font-weight:700;}
+    .sub {margin:0; color:var(--muted);}
+    .pwd-row {margin:18px 0; display:flex; gap:12px; justify-content:center; align-items:center;}
+    .pwd-row input {padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,0.06); width:220px; font-size:16px; outline:none;}
+    .pwd-row button {padding:12px 16px; border-radius:12px; border:0; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; font-weight:700; cursor:pointer;}
+    .err {color:#c33; margin-top:8px;}
+    .hint {display:block; margin-top:8px; color:var(--muted);}
+
+    .title {font-size:34px; margin:6px 0 4px 0; color:var(--accent); letter-spacing:0.2px;}
+    .title .name {font-weight:800;}
+    .lead {color:var(--muted); margin:0 0 8px 0;}
+
+    .controls {display:flex; gap:10px; justify-content:center; margin-top:8px;}
+    .primary {background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; padding:10px 16px; border-radius:10px; border:0; cursor:pointer; font-weight:700;}
+    .ghost {background:transparent; border:1px solid rgba(0,0,0,0.06); padding:10px 12px; border-radius:10px; cursor:pointer;}
+
+    .nav {display:flex; gap:12px; justify-content:center; margin:18px auto;}
+    .nav-btn {background:transparent; border:1px solid rgba(0,0,0,0.06); padding:10px 12px; border-radius:10px; cursor:pointer;}
+
+    .panel {background:var(--card); padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.04); text-align:left; opacity:0; transform: translateY(20px); transition: all 0.7s ease;}
+    .panel.show {opacity:1; transform:translateY(0);}
+    .panel h2 {margin-top:0; color:var(--accent);}
+    .panel-body {color:#333; line-height:1.6;}
+    .reasons-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px;}
+    .reason {background:linear-gradient(180deg,#fff,#fff7fb); padding:12px; border-radius:10px; border:1px solid rgba(255, 120, 160, 0.06); box-shadow:0 6px 14px rgba(0,0,0,0.04); font-size:14px;}
+
+    #letterText {width:100%; min-height:160px; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); resize:vertical; font-family:inherit; font-size:15px; box-shadow:0 0 20px rgba(255,192,203,0.2);}
+    .panel-actions {display:flex; gap:10px; justify-content:flex-end; margin-top:10px;}
+
+    .hearts-bg {position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.85;}
+    .heart-bubble {position:absolute; transform:translate(-50%,-50%); font-size:24px; color:#ff9fc8; filter:drop-shadow(0 0 8px rgba(255,140,180,0.3)); animation:rise 12s linear infinite;}
+    @keyframes rise {0% {transform:translateY(0) scale(0.8); opacity:0} 10% {opacity:1} 90% {opacity:0.8} 100% {transform:translateY(-120vh) scale(1.2)}}
+
+    #confetti-canvas {position:fixed; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:50;}
+    .hidden {display:none;}
+    .center {display:flex; align-items:center; justify-content:center;}
+
+    @media (max-width:560px){
+      .center-card {padding:16px; margin:12px;}
+      .title {font-size:28px;}
+    }
+  </style>
+</head>
+<body>
+  <main id="root">
+    <!-- Password screen -->
+    <section id="lock-screen" class="center-card">
+      <h1 class="brand">A Little Surprise ✨</h1>
+      <p class="sub">Open with the secret password</p>
+      <div class="pwd-row">
+        <input id="passInput" type="password" placeholder="Enter password" aria-label="password"/>
+        <button id="unlockBtn">Open</button>
+      </div>
+      <p id="err" class="err"></p>
+      <small class="hint">Tip: It's a special date ❤️</small>
+    </section>
+
+    <!-- Main content -->
+    <section id="main" class="hidden">
+      <div class="hearts-bg" aria-hidden="true"></div>
+
+      <header class="center-card">
+        <h1 class="title">Happy Birthday, <span class="name">Ameli</span> 🎉</h1>
+        <p class="lead">A little page made with love — open each section below</p>
+        <div class="controls">
+          <button id="celebrateBtn" class="primary">Celebrate</button>
+          <button id="resetBtn" class="ghost">Reset</button>
+        </div>
+      </header>
+
+      <nav class="nav center-card" aria-label="sections">
+        <button class="nav-btn" data-page="reasons">100 Reasons I Love You</button>
+        <button class="nav-btn" data-page="forever">My Forever</button>
+        <button class="nav-btn" data-page="letter">Letter</button>
+      </nav>
+
+      <section id="panels" class="center-card">
+        <!-- Reasons -->
+        <article id="reasons" class="panel hidden">
+          <h2>100 Reasons I Love You</h2>
+          <div id="reasonsGrid" class="reasons-grid" aria-live="polite"></div>
+        </article>
+
+        <!-- Forever -->
+        <article id="forever" class="panel hidden">
+          <h2>My Forever</h2>
+          <div class="panel-body">
+            <p id="foreverText">
+              Ameli, every moment with you feels like a warm song — simple, true and endless. I promise to be your
+              shoulder in storms and your biggest fan in sunshine. Our forever isn't just about promises; it's about
+              the little things we do each day: the jokes, the midnight messages, the shared tea. I love you.
+            </p>
+          </div>
+        </article>
+
+        <!-- Letter -->
+        <article id="letter" class="panel hidden">
+          <h2>Your Letter</h2>
+          <div class="panel-body">
+            <textarea id="letterText" placeholder="Write your letter to Ameli here..."></textarea>
+            <div class="panel-actions">
+              <button id="saveLetter" class="primary">Save</button>
+              <button id="downloadLetter" class="ghost">Download</button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <canvas id="confetti-canvas" class="hidden"></canvas>
+
+  <script>
+    const PASSWORD = "23-11-2004";
+
+    const lockScreen = document.getElementById("lock-screen");
+    const main = document.getElementById("main");
+    const err = document.getElementById("err");
+    const passInput = document.getElementById("passInput");
+    const unlockBtn = document.getElementById("unlockBtn");
+    const celebrateBtn = document.getElementById("celebrateBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const confettiCanvas = document.getElementById("confetti-canvas");
+
+    const reasonsGrid = document.getElementById("reasonsGrid");
+    const navButtons = document.querySelectorAll(".nav-btn");
+    const panels = document.querySelectorAll(".panel");
+    const heartsBg = document.querySelector(".hearts-bg");
+    const letterText = document.getElementById("letterText");
+    const downloadLetterBtn = document.getElementById("downloadLetter");
+    const saveLetterBtn = document.getElementById("saveLetter");
+
+    let confettiCtx, confettiParticles = [], confettiActive = false;
+
+    // Unlock
+    unlockBtn.addEventListener("click", tryUnlock);
+    passInput.addEventListener("keydown", e => { if(e.key==="Enter") tryUnlock(); });
+
+    function tryUnlock(){
+      const v = passInput.value.trim();
+      if(!v){ err.textContent="Please enter the password."; return; }
+      if(v===PASSWORD){
+        err.textContent="";
+        lockScreen.classList.add("hidden");
+        main.classList.remove("hidden");
+        openPage(null);
+        startFloatingHearts();
+        startConfetti();
+      } else {
+        err.textContent="Wrong password — try again ❤️";
+      }
+    }
+
+    // Floating Hearts
+    function startFloatingHearts(){
+      for(let i=0;i<25;i++){
+        const d=document.createElement("div");
+        d.className="heart-bubble";
+        d.style.left=(Math.random()*100)+"%";
+        d.style.top=(60+Math.random()*40)+"%";
+        d.style.animationDelay=(Math.random()*8)+"s";
+        d.style.fontSize=(18+Math.random()*20)+"px";
+        d.textContent="💗";
+        heartsBg.appendChild(d);
+        setTimeout(()=>d.remove(),25000+Math.random()*15000);
+      }
+    }
+
+    // Navigation / Panels
+    navButtons.forEach(b=>b.addEventListener("click",()=>openPage(b.dataset.page)));
+    function openPage(page){
+      panels.forEach(p=>p.classList.add("hidden","show"));
+      if(!page) return;
+      const el=document.getElementById(page);
+      if(el){ el.classList.remove("hidden"); setTimeout(()=>el.classList.add("show"),50); }
+      if(page==="reasons" && reasonsGrid.children.length===0) populateReasons();
+    }
+
+    // Reasons
+    function populateReasons(){
+      const base = [
+        "Your laugh brightens my darkest days 💖",
+        "You always know how to make me smile 🥰",
+        "Your hugs feel like home 🌹",
+        "You make ordinary moments magical ✨",
+        "You believe in me when I doubt myself 💕",
+        "Every glance from you melts my heart 💗",
+        "You are my sunshine on cloudy days 🌸",
+        "You make rainy days cozy and special ☔️",
+        "Your voice is my favorite melody 🎶",
+        "Being with you feels like pure magic ✨"
+      ];
+      for(let i=0;i<100;i++){
+        const text=base[i%base.length];
+        const el=document.createElement("div");
+        el.className="reason";
+        el.innerHTML=`<strong>#${i+1}</strong><div style="margin-top:6px">${text}</div>`;
+        reasonsGrid.appendChild(el);
+      }
+    }
+
+    // Letter Prefill
+    letterText.value=`My Dearest Ameli,
+
+Every moment with you feels like a dream I never want to wake up from. 
+Your laughter is the melody that brightens my days, your smile the sunlight that warms my heart.
+
+I love the way your eyes sparkle with curiosity, how your hand fits perfectly in mine, 
+and every little thing that makes you YOU.
+
+I promise to be there in your laughter, your tears, and all the quiet moments in between. 
+You are my forever, my home, my heart.
+
+With all my love,
+[Your Name]
+`;
+
+    // Confetti Canvas
+    function initConfetti(){
+      confettiCanvas.width=window.innerWidth;
+      confettiCanvas.height=window.innerHeight;
+      confettiCtx=confettiCanvas.getContext("2d");
+    }
+    window.addEventListener("resize",initConfetti);
+    initConfetti();
+
+    // Heart-Shaped Confetti (floating + swirling)
+    function startConfetti(){
+      confettiCanvas.classList.remove("hidden");
+      confettiActive=true;
+      confettiParticles=[];
+      const colors=["#ff6fa8","#ffd166","#ff9fc8","#ff7ab8","#f6b8ff"];
+      for(let i=0;i<80;i++){
+        confettiParticles.push({
+          x: Math.random()*confettiCanvas.width,
+          y: -10 - Math.random()*200,
+          vx: Math.random()*1-0.5,    // gentle horizontal sway
+          vy: 1+Math.random()*2,       // slow descent
+          size: 16+Math.random()*12,
+          color: colors[Math.floor(Math.random()*colors.length)],
+          rot: Math.random()*360,
+          rotSpeed: (Math.random()-0.5)*2,
+          char: "💖",
+          swayOffset: Math.random()*100
+        });
+      }
+      requestAnimationFrame(confettiLoop);
+      heartRain();
+    }
+
+    function confettiLoop(){
+      if(!confettiActive) return;
+      confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      confettiCtx.textAlign="center";
+      confettiCtx.textBaseline="middle";
+      for(let p of confettiParticles){
+        p.x += Math.sin((p.y+p.swayOffset)/20)*0.7 + p.vx;  // gentle sway
+        p.y += p.vy;
+        p.rot += p.rotSpeed;
+        confettiCtx.save();
+        confettiCtx.translate(p.x,p.y);
+        confettiCtx.rotate(p.rot*Math.PI/180);
+        confettiCtx.font=`bold ${p.size}px sans-serif`;
+        confettiCtx.fillStyle=p.color;
+        confettiCtx.fillText(p.char,0,0);
+        confettiCtx.restore();
+      }
+      confettiParticles=confettiParticles.filter(p=>p.y<confettiCanvas.height+50);
+      if(confettiParticles.length===0){
+        confettiActive=false;
+        confettiCanvas.classList.add("hidden");
+      } else requestAnimationFrame(confettiLoop);
+    }
+
+    function heartRain(){
+      for(let i=0;i<22;i++){
+        const h=document.createElement("div");
+        h.className="heart-bubble";
+        h.style.left=Math.random()*100+"%";
+        h.style.top="-10%";
+        h.textContent="💖";
+        h.style.fontSize=(12+Math.random()*26)+"px";
+        h.style.animationDuration=(5+Math.random()*3)+"s";
+        heartsBg.appendChild(h);
+        setTimeout(()=>h.remove(),8000+Math.random()*4000);
+      }
+    }
+
+    celebrateBtn.addEventListener("click",()=>{ startConfetti(); heartRain(); });
+    resetBtn.addEventListener("click",()=>{
+      lockScreen.classList.remove("hidden");
+      main.classList.add("hidden");
+      passInput.value="";
+      document.querySelectorAll(".panel").forEach(p=>p.classList.add("hidden","show"));
+      reasonsGrid.innerHTML="";
+      heartsBg.innerHTML="";
+    });
+
+    saveLetterBtn?.addEventListener("click",()=>{ alert("Letter saved locally in this session. You can copy it to keep it safe."); });
+    downloadLetterBtn?.addEventListener("click",()=>{
+      const text=(letterText && letterText.value)?letterText.value:"";
+      const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;
+      a.download="Ameli_Letter.txt";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    passInput.focus();
+  </script>
+</body>
+</html>
